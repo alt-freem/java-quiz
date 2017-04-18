@@ -1,16 +1,16 @@
-package test.connection;
+package test.connection.readonly.usage;
 
-/**
- * Created by SBT-Kazakov-AB on 14.04.2017.
- */
+import test.connection.readonly.impl.Connection;
+import test.connection.readonly.impl.DataSource;
+
 public class Usage {
     private final DataSource ds;
 
-    public Usage(DataSource ds) {
+    Usage(DataSource ds) {
         this.ds = ds;
     }
 
-    public String getInfo(String query){
+    String getInfo(String query) {
         try( Connection c = ds.getConnection()){
             return String.valueOf(c.query(query));
         }

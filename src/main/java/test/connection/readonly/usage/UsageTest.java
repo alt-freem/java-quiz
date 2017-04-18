@@ -1,14 +1,13 @@
-package test.connection;
+package test.connection.readonly.usage;
 
 import org.junit.Test;
+import test.connection.PoolingDataSource;
+import test.connection.readonly.impl.EchoDataSource;
 
 import static junit.framework.Assert.assertEquals;
 
-/**
- * Created by SBT-Kazakov-AB on 14.04.2017.
- */
 public class UsageTest {
-    Usage usage = new Usage(new PoolingDataSource(new EchoDataSource()));
+    private Usage usage = new Usage(new PoolingDataSource(new EchoDataSource()));
 
     @Test
     public void getInfo() throws Exception {

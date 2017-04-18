@@ -1,5 +1,8 @@
 package test.connection;
 
+import test.connection.readonly.impl.Connection;
+import test.connection.readonly.impl.DataSource;
+
 /**
  * Created by SBT-Kazakov-AB on 14.04.2017.
  */

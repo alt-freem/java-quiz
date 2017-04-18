@@ -1,9 +1,6 @@
-package test.connection;
+package test.connection.readonly.impl;
 
-/**
- * Created by SBT-Kazakov-AB on 14.04.2017.
- */
-public class EchoConnection implements Connection {
+public final class EchoConnection implements Connection {
     private volatile boolean closed = false;
 
     @Override
