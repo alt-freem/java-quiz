@@ -1,4 +1,4 @@
-package test.counter;
+package test.concurrency;
 
 /**
  * Created by freem on 14.04.2017.
