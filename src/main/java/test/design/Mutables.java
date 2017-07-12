@@ -4,10 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by sbt-kazakov-ab on 29.06.2017.
- */
-public class Immutables {
+public class Mutables {
     class Grade {
         private int minSalary, maxSalary;
 
