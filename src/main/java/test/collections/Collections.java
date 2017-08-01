@@ -2,10 +2,7 @@ package test.collections;
 
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -47,6 +44,13 @@ public class Collections {
     @Test
     public void sets() {
         Set<User> set = new HashSet<>();
+        set.add(new User("john", "smith"));
+        assertTrue(set.contains(new User("john", "smith")));
+    }
+
+    @Test
+    public void treeSets() {
+        Set<User> set = new TreeSet<>();
         set.add(new User("john", "smith"));
         assertTrue(set.contains(new User("john", "smith")));
     }
