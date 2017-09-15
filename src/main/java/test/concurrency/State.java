@@ -16,10 +16,13 @@ public class State {
     }
 
     @Test
-    public void test() {
+    public void test() throws InterruptedException {
         final State state = new State();
         Thread t1 = new Thread(() -> state.update(1, 1), "T1");
         Thread t2 = new Thread(() -> System.out.println(state), "T2");
+        t1.start();
+        t2.start();
+        t2.join();
     }
 }
 
