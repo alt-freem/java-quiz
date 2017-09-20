@@ -8,11 +8,15 @@
     <artifactId>test</artifactId>
     <version>0.1-SNAPSHOT</version>
 
+    <properties>
+        <spring.version>4.3.9.RELEASE</spring.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.8.1</version>
+            <version>4.12</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -22,7 +26,27 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>4.3.9.RELEASE</version>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.25</version>
         </dependency>
     </dependencies>
 
@@ -40,4 +64,10 @@
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>mvn-central</id>
+            <url>http://repo1.maven.apache.org/maven2/</url>
+        </repository>
+    </repositories>
 </project>
