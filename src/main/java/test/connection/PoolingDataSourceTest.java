@@ -17,8 +17,10 @@ public class PoolingDataSourceTest {
     }
 
     private String executeQuery(String query) {
+        String res = null;
         try (Connection c = ds.getConnection()) {
-            return String.valueOf(c.query(query));
+            res = String.valueOf(c.query(query));
         }
+        return res;
     }
 }
