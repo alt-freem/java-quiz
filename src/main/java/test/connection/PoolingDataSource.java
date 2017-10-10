@@ -3,16 +3,27 @@ package test.connection;
 import test.connection.readonly.impl.Connection;
 import test.connection.readonly.impl.DataSource;
 
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
+
 public class PoolingDataSource implements DataSource {
 
-    private final Connection connection;
+    private final BlockingDeque<Connection> queue;
 
-    public PoolingDataSource(DataSource dataSource) {
-        this.connection = dataSource.getConnection();
+    public PoolingDataSource(DataSource dataSource, int poolSize) {
+        queue = new LinkedBlockingDeque<>(poolSize);
+        for (int i = 0; i < poolSize; i++) {
+            queue.offerFirst(dataSource.getConnection());
+        }
     }
 
     @Override
     public Connection getConnection() {
-        return connection;
+        try {
+            return queue.takeFirst();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
     }
 }

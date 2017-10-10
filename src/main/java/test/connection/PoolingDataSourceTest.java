@@ -9,7 +9,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertSame;
 
 public class PoolingDataSourceTest {
-    private DataSource ds = new PoolingDataSource(new EchoDataSource());
+    private DataSource ds = new PoolingDataSource(new EchoDataSource(), 1);
 
     @Test
     public void reuseConnection() throws Exception {
@@ -18,8 +18,8 @@ public class PoolingDataSourceTest {
         c1.close();
 
         Connection c2 = ds.getConnection();
-        assertEquals("test2", c2.query("test"));
         assertSame(c1, c2);
+        assertEquals("test2", c2.query("test2"));
         c2.close();
     }
 }
