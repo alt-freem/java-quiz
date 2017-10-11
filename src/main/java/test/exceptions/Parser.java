@@ -1,8 +1,6 @@
 package test.exceptions;
 
-public interface Parser {
-    class Config {
-    }
+public interface Parser<T> {
 
-    Config parse(String xml);
+    T parse(String xml);
 }
