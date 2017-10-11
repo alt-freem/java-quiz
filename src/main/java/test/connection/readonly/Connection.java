@@ -1,4 +1,4 @@
-package test.connection.readonly.impl;
+package test.connection.readonly;
 
 public interface Connection extends AutoCloseable {
      void close();

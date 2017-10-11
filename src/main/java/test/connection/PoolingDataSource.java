@@ -1,7 +1,7 @@
 package test.connection;
 
-import test.connection.readonly.impl.Connection;
-import test.connection.readonly.impl.DataSource;
+import test.connection.readonly.Connection;
+import test.connection.readonly.DataSource;
 
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
