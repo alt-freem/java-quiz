@@ -7,9 +7,6 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by SBT-Kazakov-AB on 19.04.2017.
- */
 public class Collections {
 
     public static class User extends Object {
