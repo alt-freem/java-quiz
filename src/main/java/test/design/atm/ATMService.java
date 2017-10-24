@@ -5,6 +5,7 @@ package test.design.atm;
  * Логика работы сервиса подразумевает проверку карты на наличие блокировок
  * Получения счета клиента по номеру карты из БД, проверку возможности снятия (наличия) средств со счета,
  * фиксацию списания средств в БД, подтверждение банкоманту на выдачу запрошенной суммы.
+ * Так же необходимо разработать юнит тест.
  */
 public interface ATMService {
 
@@ -13,7 +14,7 @@ public interface ATMService {
     interface ATM {
         void accept();
 
-        void denny();
+        void denny(String reason);
     }
 
     class Card {
@@ -34,12 +35,16 @@ public interface ATMService {
 
         void rollback();
 
-        void commit();
+        void commit() throws TxCommitException;
+    }
+
+    class TxCommitException extends Exception {
+
     }
 
     interface AccountDao {
         Account getAccountByCardNum(Card card);
 
-        void updateAmount(Account account, int newAmmount);
+        void updateAmount(Account account, long newAmmount);
     }
 }
