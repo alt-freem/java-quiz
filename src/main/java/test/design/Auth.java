@@ -2,13 +2,15 @@ package test.design;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 
+@RunWith(MockitoJUnitRunner.class)
 public class Auth {
     class Credentials {
     }
@@ -56,7 +58,6 @@ public class Auth {
     @Test(expected = IllegalAccessException.class)
     public void privatePage() throws IllegalAccessException {
         new Controller(auth).getPage(new Credentials(), new Page(true, "<SECRET/>"));
-        fail("IllegalAccessException expected");
     }
 
     @Test

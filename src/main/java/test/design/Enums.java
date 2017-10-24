@@ -1,8 +1,5 @@
 package test.design;
 
-/**
- * Created by sbt-kazakov-ab on 29.06.2017.
- */
 public class Enums {
     class Config {
     }
