@@ -1,6 +1,21 @@
 package test.design.atm;
 
-public class ATMService {
+/**
+ * Задача реализовать сервис снятия средств через банкомат.
+ * Логика работы сервиса подразумевает проверку карты на наличие блокировок
+ * Получения счета клиента по номеру карты из БД, проверку возможности снятия (наличия) средств со счета,
+ * фиксацию списания средств в БД, подтверждение банкоманту на выдачу запрошенной суммы.
+ */
+public interface ATMService {
+
+    void cashWithdrawal(ATM atm, Card card, long amount);
+
+    interface ATM {
+        void accept();
+
+        void denny();
+    }
+
     class Card {
         long num;
     }
@@ -10,8 +25,8 @@ public class ATMService {
         long amount;
     }
 
-    interface Auth<T> {
-        boolean isAuthorized(T permission);
+    interface CardValidator {
+        boolean isValid(Card card);
     }
 
     interface TxManager {
@@ -26,19 +41,5 @@ public class ATMService {
         Account getAccountByCardNum(Card card);
 
         void updateAmount(Account account, int newAmmount);
-    }
-
-    private final TxManager tx;
-    private final Auth<String> auth;
-    private final AccountDao accountDao;
-
-    public ATMService(TxManager tx, Auth<String> auth, AccountDao accountDao) {
-        this.tx = tx;
-        this.auth = auth;
-        this.accountDao = accountDao;
-    }
-
-    public void cashWithdrawal(Card card, long amount) {
-
     }
 }
