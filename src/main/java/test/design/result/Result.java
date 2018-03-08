@@ -43,29 +43,6 @@ public final class Result<ERR, RES> {
         return new SafeResult();
     }
 
-/*
-    private static <EX extends Throwable> void sneakyThrow(Throwable ex) throws EX {
-        throw (EX) ex;
-    }
-
-    public <Ex extends java.lang.Throwable> Get<?, RES> onErrorThrow(Throw<Ex> t) throws Ex {
-        this.errHandler = (ex) -> {
-            try {
-                t.doThrow();
-            } catch (Throwable err) {
-                sneakyThrow(err);
-        }
-    };
-        if (isError) {
-            try {
-                t.doThrow();
-            }catch (Throwable ex){
-                errHandler.accept((Ex)ex);
-            }
-            throw new IllegalStateException("ERROR should be thrown");
-        } else
-            return new SafeResult();
-    }
 
     public Get<ERR, RES> onErrorThrow() throws Exception {
         if (isError)
@@ -73,7 +50,40 @@ public final class Result<ERR, RES> {
         else
             return new SafeResult();
     }
-*/
+
+    public <Ex extends java.lang.Throwable> Get<ERR, RES> onErrorThrow(ThrowFromErr<ERR, Ex> t) throws Ex {
+        this.errHandler = (ex) -> {
+            try {
+                t.doThrow(ex);
+            } catch (Throwable err) {
+                sneakyThrow(err);
+        }
+    };
+        if (isError) {
+            errHandler.accept((ERR)result);
+            throw new IllegalStateException("ERROR should be thrown");
+        } else
+            return new SafeResult();
+    }
+
+    public <Ex extends java.lang.Throwable> Get<ERR, RES> onErrorThrow(Throw<Ex> t) throws Ex {
+        this.errHandler = $ -> {
+            try {
+                t.doThrow();
+            } catch (Throwable err) {
+                sneakyThrow(err);
+        }
+    };
+        if (isError) {
+            errHandler.accept((ERR)result);
+            throw new IllegalStateException("ERROR should be thrown");
+        } else
+            return new SafeResult();
+    }
+
+    private static <EX extends Throwable> void sneakyThrow(Throwable ex) throws EX {
+        throw (EX) ex;
+    }
 
     public interface Safe<ERR, RES> {
         void onSuccess(Consumer<RES> c);
@@ -85,6 +95,11 @@ public final class Result<ERR, RES> {
 
     public interface Get<ERR, RES> extends Safe<ERR, RES> {
         RES get();
+    }
+
+    @FunctionalInterface
+    public interface ThrowFromErr<ERR, Ex extends java.lang.Throwable> {
+        void doThrow(ERR err) throws Ex;
     }
 
     @FunctionalInterface

@@ -4,10 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import test.design.result.Result.MutableReference;
 
-import static org.junit.Assert.*;
-import static test.design.result.ResultTest.Errors.ERR1;
-import static test.design.result.ResultTest.Errors.ERR2;
-import static test.design.result.ResultTest.Errors.ERR3;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static test.design.result.ResultTest.Errors.*;
 
 public class ResultTest {
     enum Errors {ERR1, ERR2, ERR3}
@@ -34,7 +33,7 @@ public class ResultTest {
 
 
     @Test
-    public void shouldNotCallOnSuccessOnError() {
+    public void shouldCallOnError() {
         MutableReference<Errors> err = new MutableReference<>();
         foo("error")
                 .onError(err::set)
@@ -43,18 +42,18 @@ public class ResultTest {
     }
 
     @Test
-    public void testExecutionChain() {
+    public void shouldExecuteChainWithSuccess() {
         MutableReference<Long> ref = new MutableReference<>();
         foo("123")
                 .onError(err -> fail(err.name()))
                 .then(this::parse, e -> fail("no error expected"))
-                .then(this::inc, e -> fail("no error extected"))
+                .then(this::inc, e -> fail("no error expected"))
                 .onSuccess(ref::set);
         assertEquals(Long.valueOf(124), ref.get());
     }
 
     @Test
-    public void shouldUseErrorHandlerOnChain() {
+    public void shouldTransformError() {
         MutableReference<Errors> err = new MutableReference<>();
         foo(Long.toString(Long.MAX_VALUE))
                 .onError(err::set)
@@ -66,13 +65,46 @@ public class ResultTest {
         foo("not a number")
                 .onError(err::set)
                 .then(this::parse, e -> ERR2)
-                .then($ -> { throw new AssertionError("execution chain should stopped on first error"); }, e -> ERR3)
+                .then($ -> {
+                    throw new AssertionError("execution chain should stopped on first error");
+                }, e -> ERR3)
                 .onSuccess($ -> fail("onSuccess handler should not be called"));
         assertSame("NumberFormatException should be converted to", ERR2, err.get());
     }
 
-    private <E> E fail(String message){
+    @Test(expected = NumberFormatException.class)
+    public void shouldThrowException() {
+        parse("not a number")
+                .onErrorThrow(e -> {
+                    throw e;
+                })
+                .get();
+    }
+
+    @Test
+    public void getShouldReturnValue() {
+        long value = parse("123")
+                .onErrorThrow(e -> fail("error is not expected"))
+                .get();
+        assertEquals(123L, value);
+    }
+
+/*
+    @Test
+    public void t() {
+        parse(Long.toString(Long.MAX_VALUE))
+                .onErrorThrow(() -> {throw new RuntimeException();})
+                .then(this::inc, e -> e)
+                .onSuccess(System.out::println);
+    }
+*/
+
+    private <E> E fail(String message) {
         Assert.fail(message);
         return null;
+    }
+
+    private <E extends Throwable> void rethrow(E e) throws E {
+        throw e;
     }
 }
