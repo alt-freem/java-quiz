@@ -40,15 +40,18 @@ public final class Result<ERR, RES> {
         if (isError) {
             this.errHandler.accept((ERR) result);
         }
-        return new SafeResult();
+        return new SafeResult<>(result, errHandler, isError);
     }
 
-
-    public Get<ERR, RES> onErrorThrow() throws Exception {
-        if (isError)
-            throw new Exception(String.valueOf(result));
-        else
-            return new SafeResult();
+    public Get<Exception, RES> onErrorThrow() throws Exception {
+        this.errHandler = err ->
+                sneakyThrow(err instanceof Throwable ? (Throwable) err : new Exception(String.valueOf(result)));
+        if (isError) {
+            errHandler.accept((ERR) result);
+            throw new IllegalStateException("ERROR should be thrown");
+        } else {
+            return new SafeResult<>(result, err -> sneakyThrow(err), false);
+        }
     }
 
     public <Ex extends java.lang.Throwable> Get<ERR, RES> onErrorThrow(ThrowFromErr<ERR, Ex> t) throws Ex {
@@ -57,13 +60,13 @@ public final class Result<ERR, RES> {
                 t.doThrow(ex);
             } catch (Throwable err) {
                 sneakyThrow(err);
-        }
-    };
+            }
+        };
         if (isError) {
-            errHandler.accept((ERR)result);
+            errHandler.accept((ERR) result);
             throw new IllegalStateException("ERROR should be thrown");
         } else
-            return new SafeResult();
+            return new SafeResult<>(result, errHandler, false);
     }
 
     public <Ex extends java.lang.Throwable> Get<ERR, RES> onErrorThrow(Throw<Ex> t) throws Ex {
@@ -72,13 +75,13 @@ public final class Result<ERR, RES> {
                 t.doThrow();
             } catch (Throwable err) {
                 sneakyThrow(err);
-        }
-    };
+            }
+        };
         if (isError) {
-            errHandler.accept((ERR)result);
+            errHandler.accept((ERR) result);
             throw new IllegalStateException("ERROR should be thrown");
         } else
-            return new SafeResult();
+            return new SafeResult<>(result, errHandler, false);
     }
 
     private static <EX extends Throwable> void sneakyThrow(Throwable ex) throws EX {
@@ -95,6 +98,10 @@ public final class Result<ERR, RES> {
 
     public interface Get<ERR, RES> extends Safe<ERR, RES> {
         RES get();
+
+        <NEXT> Get<ERR, NEXT> then(Function<RES, Result<ERR, NEXT>> next);
+
+        <ERR2, NEXT> Get<ERR, NEXT> then(Function<RES, Result<ERR2, NEXT>> next, Function<ERR2, ERR> errMapping);
     }
 
     @FunctionalInterface
@@ -112,47 +119,61 @@ public final class Result<ERR, RES> {
         R call() throws Ex;
     }
 
-    private class SafeResult implements Safe<ERR, RES>, Get<ERR, RES> {
+    private static class SafeResult<ERR, RES> implements Safe<ERR, RES>, Get<ERR, RES> {
+        private final Object errorOrValue;
+        private final Consumer<ERR> errHandler;
+        private final boolean isError;
+
+        private SafeResult(Object errorOrValue, Consumer<ERR> errHandler, boolean isError) {
+            this.errorOrValue = errorOrValue;
+            this.errHandler = errHandler;
+            this.isError = isError;
+        }
+
         @Override
         public RES get() {
-            return (RES) result;
+            if (isError) {
+                errHandler.accept((ERR) errorOrValue);
+                throw new IllegalStateException("ERROR should be thrown");
+            }
+            return (RES) errorOrValue;
         }
 
         @Override
         public void onSuccess(Consumer<RES> c) {
             if (!isError)
-                c.accept((RES) result);
+                c.accept((RES) errorOrValue);
         }
 
         @Override
-        public <NEXT> Safe<ERR, NEXT> then(Function<RES, Result<ERR, NEXT>> next) {
+        public <NEXT> Get<ERR, NEXT> then(Function<RES, Result<ERR, NEXT>> next) {
             if (isError) {
-                return Result.<ERR, NEXT>error((ERR) result)
+                return (Get) Result.<ERR, NEXT>error((ERR) errorOrValue)
                         .onError(errHandler);
             } else {
-                return next.apply((RES) result)
+                return (Get) next.apply((RES) errorOrValue)
                         .onError(errHandler);
             }
         }
 
         @Override
-        public <ERR2, NEXT> Safe<ERR, NEXT> then(Function<RES, Result<ERR2, NEXT>> next, Function<ERR2, ERR> errMapping) {
+        public <ERR2, NEXT> Get<ERR, NEXT> then(Function<RES, Result<ERR2, NEXT>> next, Function<ERR2, ERR> errMapping) {
             if (isError) {
-                return Result.<ERR, NEXT>error((ERR) result)
+                return (Get) Result.<ERR, NEXT>error((ERR) errorOrValue)
                         .onError(errHandler);
             } else {
                 MutableReference<Pair<Boolean, Object>> res = new MutableReference<>();
-                next.apply((RES) result)
+                next.apply((RES) errorOrValue)
                         .onError(e -> res.set(new Pair<>(true, e)))
                         .onSuccess(r -> res.set(new Pair<>(false, r)));
 
                 boolean isError = res.get().getKey();
                 if (isError) {
                     ERR2 err = (ERR2) res.get().getValue();
-                    return Result.<ERR, NEXT>error(errMapping.apply(err))
+                    return (Get) Result.<ERR, NEXT>error(errMapping.apply(err))
                             .onError(errHandler);
                 } else {
-                    return Result.<ERR, NEXT>ok((NEXT) res.get().getValue())
+                    return (Get) Result.<ERR, NEXT>ok((NEXT) res.get().getValue())
                             .onError(errHandler);
                 }
             }

@@ -89,15 +89,16 @@ public class ResultTest {
         assertEquals(123L, value);
     }
 
-/*
     @Test
     public void t() {
-        parse(Long.toString(Long.MAX_VALUE))
-                .onErrorThrow(() -> {throw new RuntimeException();})
-                .then(this::inc, e -> e)
-                .onSuccess(System.out::println);
+        long value = parse(Long.toString(Long.MAX_VALUE))
+                .onErrorThrow(() -> {
+                    throw new RuntimeException();
+                })
+                .then(this::inc, $ -> null)
+                .get();
+        assertEquals(Long.MIN_VALUE, value + 1);
     }
-*/
 
     private <E> E fail(String message) {
         Assert.fail(message);
