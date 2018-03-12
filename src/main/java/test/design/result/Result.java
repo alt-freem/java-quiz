@@ -49,34 +49,28 @@ public final class Result<ERR, RES> { // TODO add separate ThrowingResult with E
     }
 */
 
-    public <Ex extends Throwable> Get<Ex, RES> onErrorThrow(Throw<Ex> t) throws Ex {
+    public <Ex extends Throwable> Get<Ex, RES> onErrorThrow(Throw<Ex> throwing) throws Ex {
         if (isError) {
-            try {
-                t.doThrow();
-            } catch (Throwable err) {
-                sneakyThrow(err);
-            }
-            throw exception();
+            throwing.doThrow();
+            throw exception(result);
         } else {
             return new GetResult<>((RES)result);
         }
     }
 
-    public <Ex extends Throwable> Get<Ex, RES> onErrorThrow(ThrowFromErr<ERR, Ex> t) throws Ex {
+    public <Ex extends Throwable> Get<Ex, RES> onErrorThrow(ThrowFromErr<ERR, Ex> throwing) throws Ex {
         if (isError) {
-            try {
-                t.doThrow((ERR) result);
-            } catch (Throwable err) {
-                sneakyThrow(err);
-            }
-            throw exception();
+            throwing.doThrow((ERR) result);
+            throw exception(result);
         } else {
             return new GetResult<>((RES)result);
         }
     }
 
-    static IllegalStateException exception() {
-        return new IllegalStateException("ERROR should be thrown");
+    static IllegalStateException exception(Object err) {
+        return err instanceof Throwable
+                ? new IllegalStateException("ERROR expected to be thrown", (Throwable) err)
+                : new IllegalStateException("ERROR expected to be thrown: "+String.valueOf(err));
     }
 
     static <Ex extends Throwable> void sneakyThrow(Throwable ex) throws Ex {

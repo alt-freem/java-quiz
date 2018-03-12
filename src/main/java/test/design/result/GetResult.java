@@ -29,7 +29,7 @@ class GetResult<ERR extends Throwable, RES> implements Result.Get<ERR, RES> {
                     .onErrorThrow(Result::sneakyThrow);
         } catch (Throwable err) {
             sneakyThrow(err);
-            throw exception();
+            throw exception(err); // will never be thrown
         }
     }
 }

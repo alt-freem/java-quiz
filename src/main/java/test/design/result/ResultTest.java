@@ -71,7 +71,7 @@ public class ResultTest {
                 .onError(err::set)
                 .then(this::parse, e -> ERR2)
                 .then($ -> {
-                    throw new AssertionError("execution chain should stopped on first error");
+                    throw new AssertionError("execution chain should stop on first error");
                 }, e -> ERR3)
                 .onSuccess($ -> fail("onSuccess handler should not be called"));
         assertSame("NumberFormatException should be converted to", ERR2, err.get());
@@ -90,6 +90,7 @@ public class ResultTest {
         try {
             parse("not a number")
                     .onErrorThrow(this::parsingError)
+//                    .then(this::inc)
                     .get();
             fail("IOException expected");
         } catch (IOException e) {
@@ -100,7 +101,7 @@ public class ResultTest {
     @Test(expected = IllegalStateException.class)
     public void onErrorThrowShouldNotAllowToIgnoreException() {
         Result.ofThrowable(() -> throwErr("ERROR"))
-                .onErrorThrow(() -> {/* ignore */})
+                .onErrorThrow(() -> {/* ignore exception */})
                 .get();
     }
 
