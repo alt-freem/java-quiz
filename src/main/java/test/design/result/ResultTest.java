@@ -4,6 +4,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import test.design.result.Result.MutableReference;
 
+import java.io.IOException;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static test.design.result.ResultTest.Errors.*;
@@ -17,15 +19,15 @@ public class ResultTest {
                 : Result.ok(input);
     }
 
-    private Result<NumberFormatException, Long> parse(String s) {
+    private Result<IOException, Long> parse(String s) {
         try {
             return Result.ok(Long.parseLong(s));
         } catch (NumberFormatException nfe) {
-            return Result.error(nfe);
+            return Result.error(new IOException(nfe));
         }
     }
 
-    private Result<ArithmeticException, Long> inc(long l) {
+    private Result<Exception, Long> inc(long l) {
         return l == Long.MAX_VALUE
                 ? Result.error(new ArithmeticException("value overflow"))
                 : Result.ok(l + 1);
@@ -72,15 +74,6 @@ public class ResultTest {
         assertSame("NumberFormatException should be converted to", ERR2, err.get());
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void shouldThrowException() {
-        parse("not a number")
-                .onErrorThrow(e -> {
-                    throw e;
-                })
-                .get();
-    }
-
     @Test
     public void getShouldReturnValue() {
         long value = parse("123")
@@ -89,15 +82,11 @@ public class ResultTest {
         assertEquals(123L, value);
     }
 
-    @Test
-    public void t() {
-        long value = parse(Long.toString(Long.MAX_VALUE))
-                .onErrorThrow(() -> {
-                    throw new RuntimeException();
-                })
-                .then(this::inc, $ -> null)
+    @Test(expected = Exception.class)
+    public void getShouldThrowExceptionInCaseOfError() {
+        parse("not a number")
+                .onErrorThrow()
                 .get();
-        assertEquals(Long.MIN_VALUE, value + 1);
     }
 
     private <E> E fail(String message) {

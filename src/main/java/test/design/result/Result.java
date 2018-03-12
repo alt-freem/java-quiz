@@ -1,23 +1,11 @@
 package test.design.result;
 
 
-import javafx.util.Pair;
-
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 @SuppressWarnings("unchecked")
 public final class Result<ERR, RES> {
-    private final boolean isError;
-
-    public static <RES, Ex extends java.lang.Throwable> Result<Ex, RES> fromThrowable(ThrowingFunction<RES, Ex> c) {
-        try {
-            RES result = c.call();
-            return ok(result);
-        } catch (java.lang.Throwable e) {
-            return error((Ex) e);
-        }
-    }
 
     public static <ERR, RES> Result<ERR, RES> error(ERR err) {
         return new Result<>(err, true);
@@ -27,8 +15,16 @@ public final class Result<ERR, RES> {
         return new Result<>(res, false);
     }
 
+    public static <Ex extends java.lang.Throwable, RES> Result<Ex, RES> ofThrowable(ThrowingFunction<RES, Ex> function) {
+        try {
+            return ok(function.call());
+        } catch (java.lang.Throwable e) {
+            return error((Ex) e);
+        }
+    }
+
     private final Object result;
-    private Consumer<ERR> errHandler;
+    private final boolean isError;
 
     private Result(Object res, boolean isError) {
         this.result = res;
@@ -36,56 +32,53 @@ public final class Result<ERR, RES> {
     }
 
     public Safe<ERR, RES> onError(Consumer<ERR> c) {
-        this.errHandler = c;
         if (isError) {
-            this.errHandler.accept((ERR) result);
+            c.accept((ERR) result);
         }
-        return new SafeResult<>(result, errHandler, isError);
+        return new SafeResult<>(result, c, isError);
     }
 
-    public Get<Exception, RES> onErrorThrow() throws Exception {
-        this.errHandler = err ->
-                sneakyThrow(err instanceof Throwable ? (Throwable) err : new Exception(String.valueOf(result)));
+    public <Ex extends Throwable> Get<Ex, RES> onErrorThrow() throws Ex {
         if (isError) {
-            errHandler.accept((ERR) result);
-            throw new IllegalStateException("ERROR should be thrown");
+            sneakyThrow(result instanceof Throwable ? (Throwable) result : new Exception(String.valueOf(result)));
+            throw exception();
         } else {
-            return new SafeResult<>(result, err -> sneakyThrow(err), false);
+            return new GetResult<>((RES)result);
         }
     }
 
-    public <Ex extends java.lang.Throwable> Get<ERR, RES> onErrorThrow(ThrowFromErr<ERR, Ex> t) throws Ex {
-        this.errHandler = (ex) -> {
+    public <Ex extends java.lang.Throwable> Get<Ex, RES> onErrorThrow(ThrowFromErr<ERR, Ex> t) throws Ex {
+        if (isError) {
             try {
-                t.doThrow(ex);
+                t.doThrow((ERR) result);
             } catch (Throwable err) {
                 sneakyThrow(err);
             }
-        };
-        if (isError) {
-            errHandler.accept((ERR) result);
-            throw new IllegalStateException("ERROR should be thrown");
-        } else
-            return new SafeResult<>(result, errHandler, false);
+            throw exception();
+        } else {
+            return new GetResult<>((RES)result);
+        }
     }
 
-    public <Ex extends java.lang.Throwable> Get<ERR, RES> onErrorThrow(Throw<Ex> t) throws Ex {
-        this.errHandler = $ -> {
+    public <Ex extends java.lang.Throwable> Get<Ex, RES> onErrorThrow(Throw<? extends Throwable> t) throws Ex {
+        if (isError) {
             try {
                 t.doThrow();
             } catch (Throwable err) {
                 sneakyThrow(err);
             }
-        };
-        if (isError) {
-            errHandler.accept((ERR) result);
-            throw new IllegalStateException("ERROR should be thrown");
-        } else
-            return new SafeResult<>(result, errHandler, false);
+            throw exception();
+        } else {
+            return new GetResult<>((RES)result);
+        }
     }
 
-    private static <EX extends Throwable> void sneakyThrow(Throwable ex) throws EX {
-        throw (EX) ex;
+    static IllegalStateException exception() {
+        return new IllegalStateException("ERROR should be thrown");
+    }
+
+    static <Ex extends Throwable> void sneakyThrow(Throwable ex) throws Ex {
+        throw (Ex) ex;
     }
 
     public interface Safe<ERR, RES> {
@@ -96,12 +89,12 @@ public final class Result<ERR, RES> {
         <ERR2, NEXT> Safe<ERR, NEXT> then(Function<RES, Result<ERR2, NEXT>> next, Function<ERR2, ERR> errMapping);
     }
 
-    public interface Get<ERR, RES> extends Safe<ERR, RES> {
+    public interface Get<ERR extends Throwable, RES> {
         RES get();
 
-        <NEXT> Get<ERR, NEXT> then(Function<RES, Result<ERR, NEXT>> next);
+        void onSuccess(Consumer<RES> c);
 
-        <ERR2, NEXT> Get<ERR, NEXT> then(Function<RES, Result<ERR2, NEXT>> next, Function<ERR2, ERR> errMapping);
+        <NEXT> Get<ERR, NEXT> then(Function<RES, Result<ERR, NEXT>> next);
     }
 
     @FunctionalInterface
@@ -117,67 +110,6 @@ public final class Result<ERR, RES> {
     @FunctionalInterface
     public interface ThrowingFunction<R, Ex extends java.lang.Throwable> {
         R call() throws Ex;
-    }
-
-    private static class SafeResult<ERR, RES> implements Safe<ERR, RES>, Get<ERR, RES> {
-        private final Object errorOrValue;
-        private final Consumer<ERR> errHandler;
-        private final boolean isError;
-
-        private SafeResult(Object errorOrValue, Consumer<ERR> errHandler, boolean isError) {
-            this.errorOrValue = errorOrValue;
-            this.errHandler = errHandler;
-            this.isError = isError;
-        }
-
-        @Override
-        public RES get() {
-            if (isError) {
-                errHandler.accept((ERR) errorOrValue);
-                throw new IllegalStateException("ERROR should be thrown");
-            }
-            return (RES) errorOrValue;
-        }
-
-        @Override
-        public void onSuccess(Consumer<RES> c) {
-            if (!isError)
-                c.accept((RES) errorOrValue);
-        }
-
-        @Override
-        public <NEXT> Get<ERR, NEXT> then(Function<RES, Result<ERR, NEXT>> next) {
-            if (isError) {
-                return (Get) Result.<ERR, NEXT>error((ERR) errorOrValue)
-                        .onError(errHandler);
-            } else {
-                return (Get) next.apply((RES) errorOrValue)
-                        .onError(errHandler);
-            }
-        }
-
-        @Override
-        public <ERR2, NEXT> Get<ERR, NEXT> then(Function<RES, Result<ERR2, NEXT>> next, Function<ERR2, ERR> errMapping) {
-            if (isError) {
-                return (Get) Result.<ERR, NEXT>error((ERR) errorOrValue)
-                        .onError(errHandler);
-            } else {
-                MutableReference<Pair<Boolean, Object>> res = new MutableReference<>();
-                next.apply((RES) errorOrValue)
-                        .onError(e -> res.set(new Pair<>(true, e)))
-                        .onSuccess(r -> res.set(new Pair<>(false, r)));
-
-                boolean isError = res.get().getKey();
-                if (isError) {
-                    ERR2 err = (ERR2) res.get().getValue();
-                    return (Get) Result.<ERR, NEXT>error(errMapping.apply(err))
-                            .onError(errHandler);
-                } else {
-                    return (Get) Result.<ERR, NEXT>ok((NEXT) res.get().getValue())
-                            .onError(errHandler);
-                }
-            }
-        }
     }
 
     static class MutableReference<T> {
