@@ -19,20 +19,23 @@ public class ResultTest {
                 : Result.ok(input);
     }
 
-    private Result<IOException, Long> parse(String s) {
+    private Result<NumberFormatException, Long> parse(String s) {
         try {
             return Result.ok(Long.parseLong(s));
         } catch (NumberFormatException nfe) {
-            return Result.error(new IOException(nfe));
+            return Result.error(nfe);
         }
     }
 
-    private Result<Exception, Long> inc(long l) {
+    private Result<ArithmeticException, Long> inc(long l) {
         return l == Long.MAX_VALUE
                 ? Result.error(new ArithmeticException("value overflow"))
                 : Result.ok(l + 1);
     }
 
+    private int throwErr(String msg) throws NoSuchMethodException {
+        throw new NoSuchMethodException(msg);
+    }
 
     @Test
     public void shouldCallOnError() {
@@ -82,10 +85,10 @@ public class ResultTest {
         assertEquals(123L, value);
     }
 
-    @Test(expected = Exception.class)
-    public void getShouldThrowExceptionInCaseOfError() {
-        parse("not a number")
-                .onErrorThrow()
+    @Test(expected = NoSuchMethodException.class)
+    public void getShouldThrowExceptionInCaseOfError() throws IOException {
+        Result.ofThrowable(() -> throwErr("err"))
+                .onErrorThrow(IOException.class)
                 .get();
     }
 

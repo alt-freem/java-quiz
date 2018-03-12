@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @SuppressWarnings("unchecked")
-public final class Result<ERR, RES> {
+public final class Result<ERR, RES> { // TODO add separate ThrowingResult with Ex extends Throwable generic type |
 
     public static <ERR, RES> Result<ERR, RES> error(ERR err) {
         return new Result<>(err, true);
@@ -17,9 +17,9 @@ public final class Result<ERR, RES> {
 
     public static <Ex extends java.lang.Throwable, RES> Result<Ex, RES> ofThrowable(ThrowingFunction<RES, Ex> function) {
         try {
-            return ok(function.call());
+            return new Result<>(function.call(), false);
         } catch (java.lang.Throwable e) {
-            return error((Ex) e);
+            return new Result<>(e, true);
         }
     }
 
@@ -38,7 +38,7 @@ public final class Result<ERR, RES> {
         return new SafeResult<>(result, c, isError);
     }
 
-    public <Ex extends Throwable> Get<Ex, RES> onErrorThrow() throws Ex {
+    public <Ex extends Throwable> Get<Ex, RES> onErrorThrow(Class<Ex> errClass) throws Ex {
         if (isError) {
             sneakyThrow(result instanceof Throwable ? (Throwable) result : new Exception(String.valueOf(result)));
             throw exception();
