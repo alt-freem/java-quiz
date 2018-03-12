@@ -80,7 +80,7 @@ public class ResultTest {
     @Test
     public void getShouldReturnValue() {
         long value = parse("123")
-                .onErrorThrow(e -> fail("error is not expected"))
+                .onErrorThrow(() -> fail("error is not expected"))
                 .get();
         assertEquals(123L, value);
     }
@@ -89,12 +89,23 @@ public class ResultTest {
     public void getShouldThrowExceptionInCaseOfError() {
         try {
             parse("not a number")
-                    .onErrorThrow(e -> {throw new IOException(e);})
+                    .onErrorThrow(this::parsingError)
                     .get();
             fail("IOException expected");
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void onErrorThrowShouldNotAllowToIgnoreException() {
+        Result.ofThrowable(() -> throwErr("ERROR"))
+                .onErrorThrow(() -> {/* ignore */})
+                .get();
+    }
+
+    private void parsingError(Exception e) throws IOException {
+        throw new IOException(e);
     }
 
     private <E> E fail(String message) {
