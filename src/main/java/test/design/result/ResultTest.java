@@ -85,19 +85,20 @@ public class ResultTest {
         assertEquals(123L, value);
     }
 
-    @Test(expected = NoSuchMethodException.class)
-    public void getShouldThrowExceptionInCaseOfError() throws IOException {
-        Result.ofThrowable(() -> throwErr("err"))
-                .onErrorThrow(IOException.class)
-                .get();
+    @Test
+    public void getShouldThrowExceptionInCaseOfError() {
+        try {
+            parse("not a number")
+                    .onErrorThrow(e -> {throw new IOException(e);})
+                    .get();
+            fail("IOException expected");
+        } catch (IOException e) {
+            e.printStackTrace(System.out);
+        }
     }
 
     private <E> E fail(String message) {
         Assert.fail(message);
         return null;
-    }
-
-    private <E extends Throwable> void rethrow(E e) throws E {
-        throw e;
     }
 }

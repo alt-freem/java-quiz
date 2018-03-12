@@ -15,10 +15,10 @@ public final class Result<ERR, RES> { // TODO add separate ThrowingResult with E
         return new Result<>(res, false);
     }
 
-    public static <Ex extends java.lang.Throwable, RES> Result<Ex, RES> ofThrowable(ThrowingFunction<RES, Ex> function) {
+    public static <Ex extends Throwable, RES> Result<Ex, RES> ofThrowable(ThrowingFunction<RES, Ex> function) {
         try {
             return new Result<>(function.call(), false);
-        } catch (java.lang.Throwable e) {
+        } catch (Throwable e) {
             return new Result<>(e, true);
         }
     }
@@ -38,6 +38,7 @@ public final class Result<ERR, RES> { // TODO add separate ThrowingResult with E
         return new SafeResult<>(result, c, isError);
     }
 
+/*
     public <Ex extends Throwable> Get<Ex, RES> onErrorThrow(Class<Ex> errClass) throws Ex {
         if (isError) {
             sneakyThrow(result instanceof Throwable ? (Throwable) result : new Exception(String.valueOf(result)));
@@ -46,11 +47,12 @@ public final class Result<ERR, RES> { // TODO add separate ThrowingResult with E
             return new GetResult<>((RES)result);
         }
     }
+*/
 
-    public <Ex extends java.lang.Throwable> Get<Ex, RES> onErrorThrow(ThrowFromErr<ERR, Ex> t) throws Ex {
+    public <Ex extends Throwable> Get<Ex, RES> onErrorThrow(Throw<Ex> t) throws Ex {
         if (isError) {
             try {
-                t.doThrow((ERR) result);
+                t.doThrow();
             } catch (Throwable err) {
                 sneakyThrow(err);
             }
@@ -60,10 +62,10 @@ public final class Result<ERR, RES> { // TODO add separate ThrowingResult with E
         }
     }
 
-    public <Ex extends java.lang.Throwable> Get<Ex, RES> onErrorThrow(Throw<? extends Throwable> t) throws Ex {
+    public <Ex extends Throwable> Get<Ex, RES> onErrorThrow(ThrowFromErr<ERR, Ex> t) throws Ex {
         if (isError) {
             try {
-                t.doThrow();
+                t.doThrow((ERR) result);
             } catch (Throwable err) {
                 sneakyThrow(err);
             }
@@ -98,17 +100,17 @@ public final class Result<ERR, RES> { // TODO add separate ThrowingResult with E
     }
 
     @FunctionalInterface
-    public interface ThrowFromErr<ERR, Ex extends java.lang.Throwable> {
+    public interface ThrowFromErr<ERR, Ex extends Throwable> {
         void doThrow(ERR err) throws Ex;
     }
 
     @FunctionalInterface
-    public interface Throw<Ex extends java.lang.Throwable> {
+    public interface Throw<Ex extends Throwable> {
         void doThrow() throws Ex;
     }
 
     @FunctionalInterface
-    public interface ThrowingFunction<R, Ex extends java.lang.Throwable> {
+    public interface ThrowingFunction<R, Ex extends Throwable> {
         R call() throws Ex;
     }
 
