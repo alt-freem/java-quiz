@@ -8,7 +8,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import test.connection.readonly.Connection;
 import test.connection.readonly.DataSource;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -33,6 +34,13 @@ public class PoolingDataSourceTest {
         Connection c2 = ds.getConnection();
         assertEquals("test2", c2.query("test2"));
         c2.close();
+
+        Connection c3 = ds.getConnection();
+        assertEquals("test3", c2.query("test3"));
+        c3.close();
+
+        assertSame(c1, c2);
+        assertSame(c2, c3);
     }
 
     private static final class EchoConnection implements Connection {
