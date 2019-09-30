@@ -36,7 +36,7 @@ public class PoolingDataSourceTest {
         c2.close();
 
         Connection c3 = ds.getConnection();
-        assertEquals("test3", c2.query("test3"));
+        assertEquals("test3", c3.query("test3"));
         c3.close();
 
         assertSame(c1, c2);
