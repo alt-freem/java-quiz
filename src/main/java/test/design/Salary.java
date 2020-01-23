@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class Mutables {
+public class Salary {
     class Grade {
         private int minSalary, maxSalary;
 
