@@ -1,7 +1,6 @@
 package test.design.result;
 
-import javafx.util.Pair;
-
+import java.util.AbstractMap.SimpleEntry;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -40,10 +39,10 @@ class SafeResult<ERR, RES> implements Result.Safe<ERR, RES> {
             return Result.<ERR, NEXT>error((ERR) errorOrValue)
                     .onError(errHandler);
         } else {
-            Result.MutableReference<Pair<Boolean, Object>> res = new Result.MutableReference<>();
+            Result.MutableReference<SimpleEntry<Boolean, Object>> res = new Result.MutableReference<>();
             next.apply((RES) errorOrValue)
-                    .onError(e -> res.set(new Pair<>(true, e)))
-                    .onSuccess(r -> res.set(new Pair<>(false, r)));
+                    .onError(e -> res.set(new SimpleEntry<>(true, e)))
+                    .onSuccess(r -> res.set(new SimpleEntry<>(false, r)));
 
             boolean isError = res.get().getKey();
             if (isError) {
